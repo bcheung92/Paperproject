@@ -281,6 +281,13 @@ class Cache : public BaseCache
     bool access(PacketPtr pkt, CacheBlk *&blk,
                 Cycles &lat, PacketList &writebacks);
 
+    //zlf
+    //the func to check the pkt's memcmd
+    //dmdpktcheck is the func to check if the pkt's memcmd is demand
+    //ndmdpktcheck is the func to check if the pkt's memcmd is softpf or hardpf
+    bool dmdpktcheck(PacketPtr pkt);
+    bool ndmdpktcheck(PacketPtr pkt);
+    //end
     /**
      *Handle doing the Compare and Swap function for SPARC.
      */

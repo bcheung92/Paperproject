@@ -78,6 +78,16 @@
  */
 class BaseCache : public MemObject
 {
+    //zlf
+    /*
+     * the CoreMap0 and the CoreMap1 is the map which collect the access from diff core
+     * the l2Map is the map collect the all the access
+     */
+  public:
+    std::map<int, std::list<unsigned int> > CoreMap0;
+    std::map<int, std::list<unsigned int> > CoreMap1;
+    std::map<int, std::list<unsigned int> > l2Map;
+    //end
   protected:
     /**
      * Indexes to enumerate the MSHR queues.
@@ -446,6 +456,14 @@ class BaseCache : public MemObject
     /** The average overall latency of an MSHR miss. */
     Stats::Formula overallAvgMshrUncacheableLatency;
 
+
+    //zlf
+    //the stats count define
+    Stats::SparseHistogram core0ReuseDis;
+    Stats::SparseHistogram core1ReuseDis;
+    Stats::SparseHistogram l2StackHis;
+    Stats::Scalar cachehits;
+    //end
     /**
      * @}
      */

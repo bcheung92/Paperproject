@@ -345,6 +345,10 @@ class Packet : public Printable
      */
     uint32_t snoopDelay;
 
+    //zlf
+    //the core num of packet
+    uint32_t corenum;
+    //end
     /**
      * The extra pipelining delay from seeing the packet until the end of
      * payload is transmitted by the component that provided it (if
@@ -709,6 +713,12 @@ class Packet : public Printable
             size = req->getSize();
             flags.set(VALID_SIZE);
         }
+        //zlf
+        //if the pkt is the prefetch set the corenum 3
+        if(req->isPrefetch()){
+            corenum = 3;
+        }
+        //end
     }
 
     /**
@@ -737,13 +747,15 @@ class Packet : public Printable
      * less than that of the original packet.  In this case the new
      * packet should allocate its own data.
      */
+    //zlf
+    // the copy constructor , get the core num from the last pkt
     Packet(const PacketPtr pkt, bool clear_flags, bool alloc_data)
         :  cmd(pkt->cmd), req(pkt->req),
            data(nullptr),
            addr(pkt->addr), _isSecure(pkt->_isSecure), size(pkt->size),
            bytesValid(pkt->bytesValid),
            headerDelay(pkt->headerDelay),
-           snoopDelay(0),
+           snoopDelay(0),corenum(pkt->corenum),
            payloadDelay(pkt->payloadDelay),
            senderState(pkt->senderState)
     {
@@ -769,6 +781,16 @@ class Packet : public Printable
         }
     }
 
+    //zlf
+    //the func set the corenum
+    void setCoreNum(uint32_t id){
+        corenum = id;
+    }
+    //the func get the corenum
+    uint32_t getCoreNum(){
+        return corenum;
+    }
+    //end
     /**
      * Generate the appropriate read MemCmd based on the Request flags.
      */

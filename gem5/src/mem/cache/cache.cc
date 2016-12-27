@@ -103,7 +103,20 @@ Cache::regStats()
 {
     BaseCache::regStats();
 }
-
+//zlf
+bool Cache::dmdpktcheck(PacketPtr pkt)
+{
+    if(pkt->cmd == MemCmd::ReadReq || pkt->cmd == MemCmd::WriteReq || pkt->cmd == MemCmd::WriteLineReq || pkt->cmd == MemCmd::ReadExReq || pkt->cmd == MemCmd::ReadCleanReq || pkt->cmd == MemCmd::ReadSharedReq )
+        return true;
+    else return false;
+}
+bool Cache::ndmdpktcheck(PacketPtr pkt)
+{
+    if(pkt->cmd == MemCmd::SoftPFReq || pkt->cmd == MemCmd::HardPFReq)
+        return true;
+    else return false;
+}
+//end
 void
 Cache::cmpAndSwap(CacheBlk *blk, PacketPtr pkt)
 {

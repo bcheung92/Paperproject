@@ -440,6 +440,32 @@ BaseCache::regStats()
         .flags(nozero)
         ;
 
+    //zlf
+    //the counter init
+    core0ReuseDis
+        .init(0)
+        .name(name()+".core0ReuseDis")
+        .desc("core0 access's reuse distance")
+        ;
+
+    core1ReuseDis
+        .init(0)
+        .name(name()+".core1ReuseDis")
+        .desc("core1 access's reuse distance")
+        ;
+
+    l2StackHis
+        .init(0)
+        .name(name()+".l2StackHis")
+        .desc("l2 cache Stack Distance Histogram")
+        ;
+
+    cachehits
+        .name(name()+".cachehits")
+        .desc("number of l2 cache hits")
+        .flags(nozero)
+        ;
+    //end
     writebacks
         .init(system->maxMasters())
         .name(name() + ".writebacks")
