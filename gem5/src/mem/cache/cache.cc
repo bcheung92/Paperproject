@@ -371,7 +371,7 @@ Cache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
     //if the mem access come from the core2 we push it to the coremap1
     //and we collect all the access to the l2map
 
-    if(name=="system.l2" && (!pkt->req->isUncacheable()))
+    if(name()=="system.l2" && (!pkt->req->isUncacheable()))
     {
         /*********static of l2 access ******************/
         //address of each access
@@ -453,7 +453,7 @@ Cache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
 
     //zlf
     /**********push access to the map when it is hit****************************/
-    if(blk!=NULL))
+    if(blk!=NULL)
     //this means hit in the l2
     {
         if(name()=="system.l2" && dmdpktcheck(pkt))
@@ -483,7 +483,6 @@ Cache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
         }
     }
     /******push end**********/
-    }
     //end
     if (pkt->isEviction()) {
         // We check for presence of block in above caches before issuing
