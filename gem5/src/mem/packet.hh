@@ -716,7 +716,7 @@ class Packet : public Printable
         //zlf
         //if the pkt is the prefetch set the corenum 3
         if(req->isPrefetch()){
-            corenum = 3;
+            corenum = 33;
         }
         //end
     }
