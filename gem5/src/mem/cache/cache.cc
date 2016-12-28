@@ -64,6 +64,10 @@
 #include "mem/cache/prefetch/base.hh"
 #include "sim/sim_exit.hh"
 
+//zlf
+#define LISTSIZE 300
+#define STSIZE 20
+//end
 Cache::Cache(const CacheParams *p)
     : BaseCache(p, p->system->cacheLineSize()),
       tags(p->tags),
@@ -347,12 +351,140 @@ Cache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
     // that can modify its value.
     blk = tags->accessBlock(pkt->getAddr(), pkt->isSecure(), lat, id);
 
+    //zlf
+    //add a flag to denote the core number of every mem access
+    //in this way ,when the access arrive the l2 cache
+    //according to the flag we can tell which core the access come from
+    /*********Set the core number for each core *****/
+    if(name()=="system.cpu0.dcache" || name()=="system.cpu0.icache")
+    {
+        pkt->setCoreNum(11);
+    }
+    if(name()=="system.cpu1.dcache" || name()=="system.cpu1.icache")
+    {
+        pkt->setCoreNum(22);
+    }
+    /*set the flag over*/
+
+    //we static all the mem access taht access to the l2 cache
+    //if the mem access come from the core1 we push it to the coremap0
+    //if the mem access come from the core2 we push it to the coremap1
+    //and we collect all the access to the l2map
+
+    if(name=="system.l2" && (!pkt->req->isUncacheable()))
+    {
+        /*********static of l2 access ******************/
+        //address of each access
+        unsigned int addr_block = blockAlign(pkt->getAddr());
+        //set num of each access
+        int set_num = tags->extractTag(pkt->getAddr());
+        std::list<unsigned int >::iterator l2map_pos;
+        if(l2Map.find(set_num) != l2Map.end())
+        {
+            int stack_distance=1;
+            for(l2map_pos = l2Map[set_num].end(); l2map_pos != l2Map[set_num].begin();)
+            {
+                l2map_pos--;
+                if(*l2map_pos == addr_block)
+                {
+                    l2StackHis.sample(stack_distance);
+                    l2Map[set_num].erase(l2map_pos);
+                    if(stack_distance <= 8 )
+                        cachehits++;
+                    break;
+                }
+                else
+                    stack_distance++;
+            }
+        }
+        /************l2 access static end**************************/
+
+        /************static of core0 in l2**************************************/
+        if(pkt->getCoreNum()==11)
+        {
+            int reuse_distance = 1;
+            if(CoreMap0.find(set_num) != CoreMap0.end())
+            {
+                std::list<unsigned int >::iterator coremap0_pos;
+                for(coremap0_pos = CoreMap0[set_num].end();coremap0_pos != CoreMap0[set_num].begin();)
+                {
+                    coremap0_pos--;
+                    if(*coremap0_pos == addr_block)
+                    {
+                        core0ReuseDis.sample(reuse_distance);
+                        break;
+                    }
+                    else
+                        reuse_distance++;
+                }
+            }
+        }
+        /**************core0 access in l2 static end*******************************/
+
+        /*************static of core1 in l2 *******************************/
+        else if(pkt->getCoreNum()==22)
+        {
+            int reuse_distance = 1;
+            if(CoreMap1.find(set_num) != CoreMap1.end())
+            {
+                std::list<unsigned int >::iterator coremap1_pos;
+                for(coremap1_pos = CoreMap1[set_num].end();coremap1_pos!=CoreMap1[set_num].begin();)
+                {
+                    coremap1_pos--;
+                    if(*coremap1_pos == addr_block)
+                    {
+                        core1ReuseDis.sample(reuse_distance);
+                        break;
+                    }
+                    else
+                        reuse_distance++;
+                }
+            }
+        }
+        /**************core1 access in l2 static end*********************************/
+    }
+
+    //end
     DPRINTF(Cache, "%s%s addr %#llx size %d (%s) %s\n", pkt->cmdString(),
             pkt->req->isInstFetch() ? " (ifetch)" : "",
             pkt->getAddr(), pkt->getSize(), pkt->isSecure() ? "s" : "ns",
             blk ? "hit " + blk->print() : "miss");
 
 
+    //zlf
+    /**********push access to the map when it is hit****************************/
+    if(blk!=NULL))
+    //this means hit in the l2
+    {
+        if(name()=="system.l2" && dmdpktcheck(pkt))
+        {
+            //to the core0 core1 map
+            if(pkt->getCoreNum()==11)
+            {
+                //the access from the core0
+                if(CoreMap0[tags->extractSet(pkt->getAddr())].size()>=LISTSIZE)
+                    CoreMap0[tags->extractSet(pkt->getAddr())].erase(CoreMap0[tags->extractSet(pkt->getAddr())].begin());
+                CoreMap0[tags->extractSet(pkt->getAddr())].push_back(blockAlign(pkt->getAddr()));
+            }
+            else if(pkt->getCoreNum()==22)
+            {
+                //the access from the core1
+                if(CoreMap1[tags->extractSet(pkt->getAddr())].size()>=LISTSIZE)
+                     CoreMap1[tags->extractSet(pkt->getAddr())].erase(CoreMap1[tags->extractSet(pkt->getAddr())].begin());
+                CoreMap1[tags->extractSet(pkt->getAddr())].push_back(blockAlign(pkt->getAddr()));
+            }
+        }
+        if(name()=="system.l2" && (dmdpktcheck(pkt) || ndmdpktcheck(pkt)))
+        {
+            //all the access to the l2
+            if(l2Map[tags->extractSet(pkt->getAddr())].size()>=STSIZE)
+                l2Map[tags->extractSet(pkt->getAddr())].erase(l2Map[tags->extractSet(pkt->getAddr())].begin());
+            l2Map[tags->extractSet(pkt->getAddr())].push_back(blockAlign(pkt->getAddr()));
+        }
+    }
+    /******push end**********/
+    }
+    //end
     if (pkt->isEviction()) {
         // We check for presence of block in above caches before issuing
         // Writeback or CleanEvict to write buffer. Therefore the only
@@ -417,6 +549,34 @@ Cache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
             }
             tags->insertBlock(pkt, blk);
 
+            //zlf
+            /*** push the access to the map when miss*********/
+            if(name()=="system.l2" && dmdpktcheck(pkt))
+            {
+                //to the core0 core1 map
+                if(pkt->getCoreNum()==11)
+                {
+                    //the access from the core0
+                    if(CoreMap0[tags->extractSet(pkt->getAddr())].size()>=LISTSIZE)
+                        CoreMap0[tags->extractSet(pkt->getAddr())].erase(CoreMap0[tags->extractSet(pkt->getAddr())].begin());
+                    CoreMap0[tags->extractSet(pkt->getAddr())].push_back(blockAlign(pkt->getAddr()));
+                }
+                else if(pkt->getCoreNum()==22)
+                {
+                    //the access from the core1
+                    if(CoreMap1[tags->extractSet(pkt->getAddr())].size()>=LISTSIZE)
+                         CoreMap1[tags->extractSet(pkt->getAddr())].erase(CoreMap1[tags->extractSet(pkt->getAddr())].begin());
+                    CoreMap1[tags->extractSet(pkt->getAddr())].push_back(blockAlign(pkt->getAddr()));
+                }
+            }
+            if(name()=="system.l2" && (dmdpktcheck(pkt) || ndmdpktcheck(pkt)))
+            {
+                //all the access to the l2
+                if(l2Map[tags->extractSet(pkt->getAddr())].size()>=STSIZE)
+                    l2Map[tags->extractSet(pkt->getAddr())].erase(l2Map[tags->extractSet(pkt->getAddr())].begin());
+                l2Map[tags->extractSet(pkt->getAddr())].push_back(blockAlign(pkt->getAddr()));
+            }
+            //end
             blk->status = (BlkValid | BlkReadable);
             if (pkt->isSecure()) {
                 blk->status |= BlkSecure;
@@ -966,6 +1126,14 @@ Cache::createMissPacket(PacketPtr cpu_pkt, CacheBlk *blk,
     }
     PacketPtr pkt = new Packet(cpu_pkt->req, cmd, blkSize);
 
+    //zlf
+    /*
+     * when cache missed this func will create a pkt to get the miss pkt,
+     * and pass it to the next level
+     * here we set the new pkt's corenum as the old one
+     */
+    pkt->corenum = cpu_pkt->corenum;
+    //end
     // if there are upstream caches that have already marked the
     // packet as having sharers (not passing writable), pass that info
     // downstream
@@ -1762,6 +1930,34 @@ Cache::handleFill(PacketPtr pkt, CacheBlk *blk, PacketList &writebacks,
                     is_secure ? "s" : "ns");
         } else {
             tags->insertBlock(pkt, blk);
+            //zlf
+            /********push to the map when miss*******************/
+            if(name()=="system.l2" && dmdpktcheck(pkt))
+            {
+                //to the core0 core1 map
+                if(pkt->getCoreNum()==11)
+                {
+                    //the access from the core0
+                    if(CoreMap0[tags->extractSet(pkt->getAddr())].size()>=LISTSIZE)
+                        CoreMap0[tags->extractSet(pkt->getAddr())].erase(CoreMap0[tags->extractSet(pkt->getAddr())].begin());
+                    CoreMap0[tags->extractSet(pkt->getAddr())].push_back(blockAlign(pkt->getAddr()));
+                }
+                else if(pkt->getCoreNum()==22)
+                {
+                    //the access from the core1
+                    if(CoreMap1[tags->extractSet(pkt->getAddr())].size()>=LISTSIZE)
+                         CoreMap1[tags->extractSet(pkt->getAddr())].erase(CoreMap1[tags->extractSet(pkt->getAddr())].begin());
+                    CoreMap1[tags->extractSet(pkt->getAddr())].push_back(blockAlign(pkt->getAddr()));
+                }
+            }
+            if(name()=="system.l2" && (dmdpktcheck(pkt) || ndmdpktcheck(pkt)))
+            {
+                //all the access to the l2
+                if(l2Map[tags->extractSet(pkt->getAddr())].size()>=STSIZE)
+                    l2Map[tags->extractSet(pkt->getAddr())].erase(l2Map[tags->extractSet(pkt->getAddr())].begin());
+                l2Map[tags->extractSet(pkt->getAddr())].push_back(blockAlign(pkt->getAddr()));
+            }
+            //end
         }
 
         // we should never be overwriting a valid block
