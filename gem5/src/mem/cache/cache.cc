@@ -377,7 +377,7 @@ Cache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
         //address of each access
         unsigned int addr_block = blockAlign(pkt->getAddr());
         //set num of each access
-        int set_num = tags->extractTag(pkt->getAddr());
+        int set_num = tags->extractSet(pkt->getAddr());
         std::list<unsigned int >::iterator l2map_pos;
         if(l2Map.find(set_num) != l2Map.end())
         {
