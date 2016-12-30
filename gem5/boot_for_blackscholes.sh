@@ -1,0 +1,12 @@
+#!/bin/sh
+export M5_PATH=/home/lab302/zlf/system/
+#./build/ARM/gem5.opt configs/example/fs.py --dtb-filename=/mnt/hgfs/Share/asimbench/vexpress-v2p-ca15-tc1-gem5_dvfs_2cpus.dtb --machine-type=VExpress_EMM --kernel=/mnt/hgfs/Share/asimbench/vmlinux.smp.ics.arm.asimbench.2.6.35 --disk-image=/mnt/hgfs/Share/asimbench/ARMv7a-ICS-Android.SMP.Asimbench-v3.img --cpu-type=AtomicSimpleCPU --caches --l1i_size=32kB --l1d_size=64kB --l1d_assoc=2 --l1i_assoc=4 --cacheline_size=64  --l2cache --l2_size=2MB --l2_assoc=8 --num-l2caches=1 --num-l3caches=0 --mem-size=512MB --enable-context-switch-stats-dump  --os-type=android-ics -n 2
+
+#./build/ARM/gem5.debug configs/example/fs.py --dtb-filename=vexpress.aarch32.ll_20131205.0-gem5.1cpu.dtb --kernel=vmlinux.aarch32.ll_20131205.0-gem5 --disk-image=linux-aarch32-ael.img --cpu-type=AtomicSimpleCPU --caches --l1i_size=1kB --l1d_size=1kB --l1d_assoc=2 --l1i_assoc=4 --cacheline_size=64 --l2cache --l2_size=2MB --l2_assoc=8 --num-l2caches=1 --num-l3caches=0 --mem-size=512MB  --enable-context-switch-stats-dump
+
+#./build/ARM/gem5.opt configs/example/fs.py --dtb-filename=vexpress.aarch32.ll_20131205.0-gem5.1cpu.dtb --kernel=vmlinux.aarch32.ll_20131205.0-gem5 --disk-image=linux-aarch32-ael.img --cpu-type=AtomicSimpleCPU --caches --l1i_size=1kB --l1d_size=1kB --l1d_assoc=2 --l1i_assoc=4 --cacheline_size=64 --l2cache --l2_size=1MB  --num-l2caches=1  --mem-size=512MB  --enable-context-switch-stats-dump 
+
+#./build/ARM/gem5.opt configs/example/fs.py --m--kernel=/mnt/hgfs/Share/bbench/vmlinux-gem5-android  --cpu-type=AtomicSimpleCPU --caches --l1i_size=32kB --l1d_size=64kB --l1d_assoc=2 --l1i_assoc=4 --cacheline_size=64  --l2cache --l2_size=2MB --l2_assoc=8  --num-l2caches=1 --num-l3caches=0 --mem-size=512MB --enable-context-switch-stats-dump  --os-type=android-ics -n 2 -b bbench-ics
+
+#./build/ARM/gem5.opt --outdir=./linux_out_mad configs/example/fs.py  --machine-type=VExpress_EMM   --caches --l1i_size=16kB --l1i_assoc=2 --l1d_assoc=2 --l1d_size=16kB --cacheline=64 --l2cache --num-l2caches=1 --l2_size=1MB --l2_assoc=8 --num-l3caches=0 --mem-size=512MB  --cpu-type=AtomicSimpleCPU --enable-context-switch-stats-dump  
+./build/ARM/gem5.opt --outdir=./blackscholes-out configs/example/fs.py  --machine-type=VExpress_EMM   --caches --l1i_size=64kB --l1i_assoc=4 --l1d_assoc=4 --l1d_size=64kB --cacheline=64 --l2cache --num-l2caches=1 --l2_size=512kB --l2_assoc=8 --num-l3caches=0 --mem-size=512MB  --cpu-type=arm_detailed  --enable-context-switch-stats-dump -n 2 -r 1
