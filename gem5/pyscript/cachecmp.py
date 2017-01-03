@@ -27,7 +27,6 @@ lines = fpRead.readline()
 
 while lines:
 	threadbeginmatch = threadbeginPattern.match(lines)
-    print "----------------------- reading lines------------------"
 	if threadbeginmatch:
 		dtbwalker1=0
 		itbwalker1=0
@@ -36,16 +35,16 @@ while lines:
 		overallhits=0
 		cachehits=0
 		gem5hits=0
-    	print "------------------------ entering thread ------------------"
+                ratio = 0
 		threadlines = fpRead.readline()
 		while threadlines:
-	        dtbwalker1match = dtbwalker1Pattern.search(threadlines)
-	        itbwalker1match = itbwalker1Pattern.search(threadlines)
-	        dtbwalker2match = dtbwalker2Pattern.search(threadlines)
-	        itbwalker2match = itbwalker2Pattern.search(threadlines)
-	        overallhitsmatch = overallhitsPattern.search(threadlines)
-	        cachehitsmatch = cachehitsPattern.search(threadlines)
-	        threadendmatch = threadendPattern.match(threadlines)
+	                dtbwalker1match = dtbwalker1Pattern.search(threadlines)
+	                itbwalker1match = itbwalker1Pattern.search(threadlines)
+	                dtbwalker2match = dtbwalker2Pattern.search(threadlines)
+	                itbwalker2match = itbwalker2Pattern.search(threadlines)
+	                overallhitsmatch = overallhitsPattern.search(threadlines)
+        	        cachehitsmatch = cachehitsPattern.search(threadlines)
+	                threadendmatch = threadendPattern.match(threadlines)
 			if dtbwalker1match:
 				dtbwalker1=int(dtbwalker1match.group(2))
 			if itbwalker1match:
@@ -60,11 +59,17 @@ while lines:
 				cachehits=int(cachehitsmatch.group(2))
 			if threadendmatch:
 				gem5hits=overallhits-(dtbwalker1+dtbwalker2+itbwalker1+itbwalker2)
-				fpWrite.write("gem5hit%d "%gem5hits)
-				fpWrite.write("cachehit%d"%cachehits)
+                                absval = abs(gem5hits-cachehits)
+                                if gem5hits!=0:
+                                    ratio=(absval/float(gem5hits))*100
+                                else:
+                                    ratio=float(0)
+				fpWrite.write("gem5hit  %d   " % gem5hits)
+				fpWrite.write("cachehit  %d   " % cachehits)
+                                fpWrite.write("ratio %.2f%%" % ratio)
 				fpWrite.write("\n")
 				break
-        	threadlines = fpRead.readline()
-    lines = fpRead.readline()
+                        threadlines = fpRead.readline()
+        lines = fpRead.readline()
 fpRead.close()
 fpWrite.close()
