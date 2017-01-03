@@ -1,7 +1,14 @@
 #!/usr/bin/env python
+
+### this is the python script created by Ferris Cheung 2017-01-01
+### It is used to get the shared Cache Reuse Distance Distribution which is added up by diff core's RDD-----L2R,and it's output as name-reuse.txt
+### and it gets the shared Cache Stack Distance Distribution which is collected in the l2 cache port ----L2E,and it's output as name-stack.txt
 import sys
 import re
 import os
+###
+### input file and output file define
+###
 inFilename = sys.argv[1]
 if os.path.isfile(inFilename):
     namelength = inFilename.rfind(".")
@@ -13,8 +20,11 @@ if os.path.isfile(inFilename):
 print "inFilename:", inFilename
 print "outFilename:", ReuseDH,StackDH
 
+#the input file
 fpRead = open(inFilename, "r")
+#the output file Reuse Distance Distribution
 RDHWrite = open(ReuseDH, "w+")
+#the output file Stack Distance Distribution
 SDHWrite = open(StackDH,"w+")
 
 #core0ReuseDis pattern
@@ -43,8 +53,12 @@ core1cpiPattern = re.compile(r'.*(system.switch_cpus1.cpi).* (([0-9|\.]+)|(nan))
 threadbeginPattern = re.compile(r'.*Begin Simulation Statistics.*')
 threadendPattern =re.compile(r'.*End Simulation Statistics.*')
 lines = fpRead.readline()
+#debug is the flag to denote which thread is working on
 debug = 1
 
+###
+### func check is mean to check the distribution is continuous or not
+###
 def check(a,b):
     if b-a==1:
         return 0
@@ -57,19 +71,27 @@ while lines:
     threadbeginmatch = threadbeginPattern.search(lines)
 #    print "----------------------- reading lines------------------"
     if threadbeginmatch:
+        #this three flag is to denote the distribution is first time to work
+        #when it is true which means we are collect this thread's first distribution
+        #once we collect the thread's first distribution ,we set the flag to false
         core0flag = True
         core1flag = True
         l2flag = True
+        #this three list is the container of distrubtion
         core0=[]
         core1=[]
         l2 = []
+        #this thres pos is the pointer of the last distribution we collected
+        #use it to check the distribution is continuous or not
         core0pos=1
         core1pos=1
         l2pos = 1
         l2R = []
         l2ES=[]
+        #this three pos is the pointer of the Distribution we are collecting
         pos0=0
         pos1=0
+        pos2=0
 #        print "------------------------ thread matched ------------------"
         threadlines = fpRead.readline()
         threadendmatch = threadendPattern.match(threadlines)
@@ -93,6 +115,8 @@ while lines:
                 core0sample = core0samplematch.group(2)
             if core0Dismatch:
                 pos0 = int(core0Dismatch.group(2))
+                #this part add the 0 to the distribution
+                #when our distribtuion begin with the number bigger than 1
                 if core0flag:
                     core0flag = False
                     core0pos = pos0
@@ -101,6 +125,8 @@ while lines:
                         core0.append(0)
                         dis0 = dis0-1
                 val0 = int(core0Dismatch.group(3))
+                #this part the add the 0 to the distribution
+                #when our distribution is not continous
                 dis0 = check(core0pos,pos0)
                 if dis0!=0:
                     while (dis0-1) > 0:
@@ -175,31 +201,36 @@ while lines:
                 dis0 = check(pos0,300)
                 dis1 = check(pos1,300)
                 dis2 = check(pos2,30)
-                if dis0!=0:
-                    if pos0 == 299:
+                if (dis0==0):
+                    if pos0==299:
                         core0.append(0)
-                    else:
-                        while dis0 > 0 :
-                            core0.append(0)
-                            dis0 = dis0-1
-                if dis1!=0:
+                else:
+                    while dis0 > 0 :
+                        core0.append(0)
+                        dis0 = dis0-1
+                if (dis1==0):
                     if pos1 == 299:
                         core1.append(0)
-                    else:
-                        while dis1 >0:
-                            core1.append(0)
-                            dis1 = dis1-1
-                if dis2!=0:
+                else:
+                    while dis1 > 0:
+                        core1.append(0)
+                        dis1 = dis1-1
+                if (dis2==0):
                     if pos2 == 29:
                         l2.append(0)
-                    else:
-                        while dis2 > 0:
-                            l2.append(0)
-                            dis2 = dis2-1
+                else:
+                    while dis2 > 0:
+                        l2.append(0)
+                        dis2 = dis2-1
                 print len(core0)
                 assert len(core0)==300, "core0 len error"
                 assert len(core1)==300, "core1 len error"
                 assert len(l2)==30,"l2 len error"
+                ##
+                ##this part is to calc the added up reuse distance distribution
+                ##when the cpi0 and cpi1 are both exist we do the calc
+                ##when it's not ,add the direct
+                ##
                 if ((cpi1!=0) and (cpi0!=0)):
                     fac0=(read0+write0)/commit0
                     fac1=(read1+write1)/commit1
