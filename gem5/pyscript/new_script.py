@@ -249,11 +249,13 @@ while lines:
                         l2R.append(int(core0[j]+core1[j]))
                 assert len(l2R)==300, "l2R error"
                 for k in range(300):
-                    RDHWrite.write("%d\n" %l2R[k])
+                    RDHWrite.write("%d" %l2R[k])
                 for m in range(30):
                     SDHWrite.write("%d " %l2[m])
-                RDHWrite.write('thread end\n')
+                RDHWrite.write('\n')
                 SDHWrite.write("\n")
+                print "thread ", debug,"done"
+                debug = debug +1
                 break
             threadlines = fpRead.readline()
     lines = fpRead.readline()
