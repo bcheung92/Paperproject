@@ -86,6 +86,9 @@ class BaseCache : public MemObject
   public:
     std::map<int, std::list<unsigned int> > CoreMap0;
     std::map<int, std::list<unsigned int> > CoreMap1;
+    //2017-3-11 modified zlf
+    std::map<int, std::list<unsigned int> > l2Map_real;
+    //end
     std::map<int, std::list<unsigned int> > l2Map;
     //end
   protected:
@@ -461,6 +464,9 @@ class BaseCache : public MemObject
     //the stats count define
     Stats::SparseHistogram core0ReuseDis;
     Stats::SparseHistogram core1ReuseDis;
+    //zlf 2017-03-11
+    Stats::SparseHistogram l2ReuseDis;
+    //end
     Stats::SparseHistogram l2StackHis;
     Stats::Scalar cachehits;
     //end

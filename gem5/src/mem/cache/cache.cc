@@ -399,6 +399,22 @@ Cache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
         }
         /************l2 access static end**************************/
 
+        if(l2Map_real.find(set_num) != l2Map_real.end())
+        {
+            std::list<unsigned int>::iterator l2map_real_pos;
+            int reuse_distance =1;
+            for(l2map_real_pos = l2Map_real[set_num].end(); l2map_real_pos != l2Map_real[set_num].begin();)
+            {
+                l2map_real_pos--;
+                if(*l2map_real_pos = addr_block)
+                {
+                    l2ReuseDis.sample(reuse_distance);
+                    break;
+                }
+                else
+                    reuse_distace++;
+            }
+        }
         /************static of core0 in l2**************************************/
         if(pkt->getCoreNum()==11)
         {
@@ -480,6 +496,11 @@ Cache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
             if(l2Map[tags->extractSet(pkt->getAddr())].size()>=STSIZE)
                 l2Map[tags->extractSet(pkt->getAddr())].erase(l2Map[tags->extractSet(pkt->getAddr())].begin());
             l2Map[tags->extractSet(pkt->getAddr())].push_back(blockAlign(pkt->getAddr()));
+            //zlf 2017-03-11
+            if(l2Map_real[tags->extractSet(pkt->getAddr())].size()>=LISTSIZE)
+                l2Map_real[tags->extractSet(pkt->getAddr())].erase(l2Map_real[tags->extractSet(pkt->getAddr())].begin());
+            l2Map_real[tags->extractSet(pkt->getAddr())].push_back(blockAlign(pkt->getAddr()));
+            //end
         }
     }
     /******push end**********/
@@ -574,6 +595,11 @@ Cache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
                 if(l2Map[tags->extractSet(pkt->getAddr())].size()>=STSIZE)
                     l2Map[tags->extractSet(pkt->getAddr())].erase(l2Map[tags->extractSet(pkt->getAddr())].begin());
                 l2Map[tags->extractSet(pkt->getAddr())].push_back(blockAlign(pkt->getAddr()));
+                //zlf 2017-03-11
+                if(l2Map_real[tags->extractSet(pkt->getAddr())].size()>=LISTSIZE)
+                    l2Map_real[tags->extractSet(pkt->getAddr())].erase(l2Map_real[tags->extractSet(pkt->getAddr())].begin());
+                l2Map_real[tags->extractSet(pkt->getAddr())].push_back(blockAlign(pkt->getAddr()));
+                //end
             }
             //end
             blk->status = (BlkValid | BlkReadable);
@@ -1955,6 +1981,11 @@ Cache::handleFill(PacketPtr pkt, CacheBlk *blk, PacketList &writebacks,
                 if(l2Map[tags->extractSet(pkt->getAddr())].size()>=STSIZE)
                     l2Map[tags->extractSet(pkt->getAddr())].erase(l2Map[tags->extractSet(pkt->getAddr())].begin());
                 l2Map[tags->extractSet(pkt->getAddr())].push_back(blockAlign(pkt->getAddr()));
+                //zlf 2017-03-11
+                if(l2Map_real[tags->extractSet(pkt->getAddr())].size()>=LISTSIZE)
+                    l2Map_real[tags->extractSet(pkt->getAddr())].erase(l2Map_real[tags->extractSet(pkt->getAddr())].begin());
+                l2Map_real[tags->extractSet(pkt->getAddr())].push_back(blockAlign(pkt->getAddr()));
+                //end
             }
             //end
         }

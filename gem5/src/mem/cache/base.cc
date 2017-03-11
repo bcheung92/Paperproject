@@ -453,7 +453,13 @@ BaseCache::regStats()
         .name(name()+".core1ReuseDis")
         .desc("core1 access's reuse distance")
         ;
-
+    //zlf 2017-03-11
+    l2ReuseDis
+        .init(0)
+        .name(name()+".l2ReuseDis")
+        .desc("l2 cache ReuseDis Distance Histogram")
+        ;
+    //end
     l2StackHis
         .init(0)
         .name(name()+".l2StackHis")
